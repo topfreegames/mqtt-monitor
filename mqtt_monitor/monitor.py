@@ -1,9 +1,15 @@
+import logging
+
 import datadog.dogstatsd as dogstatsd
 import paho.mqtt.client as mqtt
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 class Monitor:
     def __init__(self, args):
+        logger.info("|-o-| Starting |-o-|")
         self.args = args
         self.statsd = dogstatsd.DogStatsd(
             host=self.args.statsd_host,
@@ -12,7 +18,7 @@ class Monitor:
         )
 
     def run(self):
-        print("Connecting to MQTT Broker")
+        logger.info("Connecting to MQTT Broker")
         client = mqtt.Client(client_id=self.args.client_name)
         client.on_connect = self.on_connect
         client.on_message = self.on_message
@@ -32,7 +38,7 @@ class Monitor:
         client.loop_forever()
 
     def on_connect(self, client, userdata, flags, rc):
-        print("Connected with result code "+str(rc))
+        logger.info("Connected with result code "+str(rc))
 
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
@@ -65,7 +71,7 @@ class Monitor:
                 )
             )
         except ValueError:
-            print("Error sending data: {} value:{}".format(
+            logger.error("Error sending data: {} value:{}".format(
                 msg.topic,
                 msg.payload
             ))
