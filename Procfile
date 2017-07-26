@@ -1,1 +1,1 @@
-cmd: start.sh
+cmd: ./start.sh
