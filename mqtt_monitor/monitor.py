@@ -3,8 +3,9 @@ import logging
 import datadog.dogstatsd as dogstatsd
 import paho.mqtt.client as mqtt
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler())
 
 
 class Monitor:
