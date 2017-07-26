@@ -7,7 +7,7 @@ def main():
         prog="MQTT monitor",
         description='Monitors $SYS tree and sends it to DatadogStatsd'
     )
-    parser.add_argument('--exclude-mqtt-server-name', default=True)
+    parser.add_argument('--exclude-mqtt-server-name', action='store_true')
     parser.add_argument('--mqtt-host', default='localhost')
     parser.add_argument('--mqtt-port', type=int, default=1883)
     parser.add_argument('--mqtt-username', default=None)
