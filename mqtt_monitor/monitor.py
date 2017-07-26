@@ -4,7 +4,6 @@ import paho.mqtt.client as mqtt
 
 class Monitor:
     def __init__(self, args):
-        print(args)
         self.args = args
         self.statsd = dogstatsd.DogStatsd(
             host=self.args.statsd_host,
