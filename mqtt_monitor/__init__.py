@@ -19,4 +19,5 @@ def main():
     parser.add_argument('--namespace', default='mqtt-broker')
     parser.add_argument('--client-name', default='mqtt-monitor')
     args = parser.parse_args()
+    print("|-o-| Starting |-o-|")
     monitor.Monitor(args).run()

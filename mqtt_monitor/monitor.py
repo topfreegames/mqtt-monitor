@@ -12,6 +12,7 @@ class Monitor:
         )
 
     def run(self):
+        print("Connecting to MQTT Broker")
         client = mqtt.Client(client_id=self.args.client_name)
         client.on_connect = self.on_connect
         client.on_message = self.on_message
