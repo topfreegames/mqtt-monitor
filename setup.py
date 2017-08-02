@@ -68,7 +68,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'paho-mqtt',
+        'requests',
         'datadog'
     ],
 
@@ -76,10 +76,7 @@ setup(
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[dev,test]
-    extras_require={
-        'dev': ['check-manifest'],
-        'test': ['coverage'],
-    },
+    extras_require={},
 
     entry_points={
         'console_scripts': [

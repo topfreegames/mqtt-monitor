@@ -1,11 +1,18 @@
 import logging
+import time
 
 import datadog.dogstatsd as dogstatsd
-import paho.mqtt.client as mqtt
+import requests
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
+
+
+API = [
+    'api/stats',
+    'api/metrics',
+]
 
 
 class Monitor:
@@ -19,60 +26,38 @@ class Monitor:
         )
 
     def run(self):
-        logger.info("Connecting to MQTT Broker")
-        client = mqtt.Client(client_id=self.args.client_name)
-        client.on_connect = self.on_connect
-        client.on_message = self.on_message
-        if self.args.mqtt_username and self.args.mqtt_password:
-            client.username_pw_set(
-                self.args.mqtt_username,
-                self.args.mqtt_password,
+        while True:
+            try:
+                for api in API:
+                    url = self.get_url(api)
+                    logger.info(
+                        "requesting - {}".format(url)
+                    )
+                    r = requests.get(
+                        url, auth=(
+                            self.args.mqtt_api_username,
+                            self.args.mqtt_api_password,
+                        )
+                    )
+                    self.send_metrics(r.json())
+            except Exception as e:
+                logger.error(e)
+            finally:
+                time.sleep(15)
+
+    def get_url(self, uri):
+        return "{}/{}".format(self.args.mqtt_api_url, uri)
+
+    def send_metrics(self, metrics):
+        for k, v in metrics.items():
+            metric = self.transform_metric(k)
+            value = float(v)
+            logger.info(
+                "sending metrics - {}: {}".format(metric, value)
             )
-        if self.args.ca_file:
-            client.tls_set(
-                ca_certs=self.args.ca_file
-            )
-        if self.args.insecure:
-            client.tls_insecure_set(self.args.insecure)
-        client.connect(self.args.mqtt_host, self.args.mqtt_port, 60)
+            self.statsd.gauge(metric, value)
 
-        client.loop_forever()
-
-    def on_connect(self, client, userdata, flags, rc):
-        logger.info("Connected with result code "+str(rc))
-
-        # Subscribing in on_connect() means that if we lose the connection and
-        # reconnect then subscriptions will be renewed.
-        client.subscribe("$SYS/#")
-
-    def transform_topic(self, topic):
-        start_metric = 1
-        server_name = 'common-mqtt-broker'
-        splitted_topic = topic.split("/")
-        if self.args.exclude_mqtt_server_name:
-            start_metric = 2
-            server_name = splitted_topic[1]
-        metric = '.'.join(splitted_topic[start_metric:])
-        return (metric, server_name)
-
-    # The callback for when a PUBLISH message is received from the server.
-    def on_message(self, client, userdata, msg):
-        try:
-            value = float(msg.payload)
-            metric, server_name = self.transform_topic(msg.topic)
-            self.statsd.gauge(
-                metric,
-                value,
-                tags=["server_name:{}".format(server_name)]
-            )
-            print(
-                "{} {}".format(
-                    self.transform_topic(msg.topic),
-                    value
-                )
-            )
-        except ValueError:
-            logger.error("Error sending data: {} value:{}".format(
-                msg.topic,
-                msg.payload
-            ))
+    def transform_metric(self, metric):
+        return "{}.{}".format(
+            self.args.namespace, metric.replace("/", ".")
+        )
