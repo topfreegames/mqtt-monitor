@@ -68,7 +68,7 @@ class Monitor:
                     for api in API:
                         url = self.get_url(api, server=server['url'])
                         r = self.do_request(url)
-                        self.send_metrics(r.json(), server)
+                        self.send_metrics(r.json(), server['name'])
             except Exception as e:
                 logger.error(e)
             finally:
