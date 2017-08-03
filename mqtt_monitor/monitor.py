@@ -56,8 +56,9 @@ class Monitor:
         if not status:
             status = self.statsd.OK
         self.statsd.service_check(
-            "mqtt.{}".format(server),
+            "mqtt.broker",
             status,
+            hostname=server,
         )
 
     def run(self):
