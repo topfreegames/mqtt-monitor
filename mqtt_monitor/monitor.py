@@ -49,7 +49,7 @@ class Monitor:
                 running_servers.append(server)
                 self.check_service(server["name"])
                 continue
-            self.check_service(server["name"], dogstatsd.CRITICAL)
+            self.check_service(server["name"], self.statsd.CRITICAL)
         return running_servers
 
     def check_service(self, server, status=None):
