@@ -36,29 +36,52 @@ class Monitor:
             )
         )
 
+    def do_kubeapi_request(self, uri):
+        logger.info(
+            "requesting to kube api - {}".format(uri)
+        )
+
+        return requests.get(
+            self.get_url(uri, server=self.args.kube_api_url),
+            headers={
+                'Authorization': 'Bearer {}'.format(self.args.kube_token)
+            },
+            verify=False,
+        )
+
     def get_cluster_info(self):
-        url = self.get_url("api/nodes")
         running_servers = []
-        r = self.do_request(url)
-        servers = r.json()
+        r = self.do_kubeapi_request('api/v1/namespaces/{}/pods/'.format(
+            self.args.kube_namespace
+        ))
+        servers = [
+            x['metadata']['name']
+            for x in r.json()['items'] if
+            x['metadata']['labels']['app'] == self.args.kube_app_label
+        ]
+
         for server in servers:
-            if server["cluster_status"] == "Running":
-                server["url"] = "http://{}:18083".format(
-                    server["name"].split("@")[1]
+            server_item = {
+                'name': server,
+                'url': 'http://{}.{}:18083'.format(
+                    server,
+                    self.args.kube_router
                 )
-                running_servers.append(server)
-                self.check_service(server["name"])
-                continue
-            self.check_service(server["name"], self.statsd.CRITICAL)
+            }
+            self.check_service(server_item)
+            running_servers.append(server_item)
         return running_servers
 
-    def check_service(self, server, status=None):
-        if not status:
-            status = self.statsd.OK
+    def check_service(self, server):
+        status = self.statsd.OK
+        url = self.get_url('api/nodes', server=server['url'])
+        r = self.do_request(url)
+        if r.status != 200 or len(r.json()) == 1:
+            status = self.statsd.CRITICAL
         self.statsd.service_check(
             "mqtt.broker",
             status,
-            hostname=server,
+            hostname=server['name'],
         )
 
     def run(self):
@@ -71,7 +94,7 @@ class Monitor:
                         r = self.do_request(url)
                         self.send_metrics(r.json(), server['name'])
             except Exception as e:
-                logger.error(e)
+                logger.exception(e)
             finally:
                 time.sleep(15)
 
