@@ -76,7 +76,7 @@ class Monitor:
         status = self.statsd.OK
         url = self.get_url('api/nodes', server=server['url'])
         r = self.do_request(url)
-        if r.status != 200 or len(r.json()) == 1:
+        if r.status_code != 200 or len(r.json()) == 1:
             status = self.statsd.CRITICAL
         self.statsd.service_check(
             "mqtt.broker",
