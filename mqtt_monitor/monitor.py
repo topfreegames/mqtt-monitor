@@ -68,8 +68,8 @@ class Monitor:
                     self.args.kube_router
                 )
             }
-            self.check_service(server_item)
-            running_servers.append(server_item, len(servers))
+            self.check_service(server_item, len(servers))
+            running_servers.append(server_item)
         return running_servers
 
     def check_service(self, server, servers_count):
