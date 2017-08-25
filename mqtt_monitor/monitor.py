@@ -75,14 +75,19 @@ class Monitor:
     def check_service(self, server, servers_count):
         status = self.statsd.OK
         url = self.get_url('api/nodes', server=server['url'])
-        r = self.do_request(url)
-        if r.status_code != requests.codes.ok or len(r.json()) < servers_count:
+        try:
+            r = self.do_request(url)
+            if r.status_code != requests.codes.ok or len(r.json()) < servers_count:
+                status = self.statsd.CRITICAL
+        except Exception as e:
+            logger.exception(e)
             status = self.statsd.CRITICAL
-        self.statsd.service_check(
-            "mqtt.broker",
-            status,
-            hostname=server['name'],
-        )
+        finally:
+            self.statsd.service_check(
+                "mqtt.broker",
+                status,
+                hostname=server['name'],
+            )
 
     def run(self):
         while True:
