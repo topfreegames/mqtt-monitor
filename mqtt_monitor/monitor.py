@@ -79,7 +79,7 @@ class Monitor:
             r = self.do_request(url)
             if r.status_code != requests.codes.ok or len(r.json()) < servers_count:
                 status = self.statsd.CRITICAL
-        except Exception as e:
+        except requests.ConnectionError as e:
             logger.exception(e)
             status = self.statsd.CRITICAL
         finally:
@@ -94,10 +94,13 @@ class Monitor:
             try:
                 servers = self.get_cluster_info()
                 for server in servers:
-                    for api in API:
-                        url = self.get_url(api, server=server['url'])
-                        r = self.do_request(url)
-                        self.send_metrics(r.json(), server['name'])
+                    try:
+                        for api in API:
+                            url = self.get_url(api, server=server['url'])
+                            r = self.do_request(url)
+                            self.send_metrics(r.json(), server['name'])
+                    except requests.ConnectionError:
+                        continue
             except Exception as e:
                 logger.exception(e)
             finally:
