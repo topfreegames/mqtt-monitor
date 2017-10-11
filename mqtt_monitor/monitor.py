@@ -10,8 +10,8 @@ logger.addHandler(logging.StreamHandler())
 
 
 API = [
-    'api/stats',
-    'api/metrics',
+    'api/v2/monitoring/stats',
+    'api/v2/monitoring/metrics',
 ]
 
 
@@ -74,7 +74,7 @@ class Monitor:
 
     def check_service(self, server, servers_count):
         status = self.statsd.OK
-        url = self.get_url('api/nodes', server=server['url'])
+        url = self.get_url('api/v2/monitoring/nodes', server=server['url'])
         try:
             r = self.do_request(url)
             if r.status_code != requests.codes.ok or len(r.json()) < servers_count:
