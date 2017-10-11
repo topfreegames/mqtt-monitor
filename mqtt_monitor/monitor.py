@@ -111,7 +111,7 @@ class Monitor:
         for k, v in metrics.items():
             metric = k.replace("/", ".")
             value = float(v)
-            logger.info(
+            logger.debug(
                 "sending metrics - {}: {}".format(metric, value)
             )
             self.statsd.gauge(
