@@ -93,9 +93,9 @@ class Monitor:
         while True:
             try:
                 for api in API:
-                    url = self.get_url(api, server="{}:8080".format(self.args.kube_api_url))
+                    url = self.get_url(api, server="http://{}:8080".format(self.args.kube_router))
                     r = self.do_request(url)
-                    stats_json = r.json()['result']
+                    stats_json = r.json()['result'][0]
                     for server,stats in stats_json.items():
                         self.send_metrics(stats, server)
             except requests.ConnectionError:
