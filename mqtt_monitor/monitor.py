@@ -77,7 +77,7 @@ class Monitor:
         url = self.get_url('api/v2/monitoring/nodes', server=server['url'])
         try:
             r = self.do_request(url)
-            if r.status_code != requests.codes.ok or len(r.json()) < servers_count:
+            if r.status_code != requests.codes.ok or len(r.json()['result']) < servers_count:
                 status = self.statsd.CRITICAL
         except requests.ConnectionError as e:
             logger.exception(e)
@@ -92,19 +92,15 @@ class Monitor:
     def run(self):
         while True:
             try:
-                servers = self.get_cluster_info()
-                for server in servers:
-                    try:
-                        for api in API:
-                            url = self.get_url(api, server=server['url'])
-                            r = self.do_request(url)
-                            self.send_metrics(r.json(), server['name'])
-                    except requests.ConnectionError:
-                        continue
-            except Exception as e:
-                logger.exception(e)
-            finally:
-                time.sleep(15)
+                for api in API:
+                    url = self.get_url(api, server="{}:8080".format(self.args.kube_api_url))
+                    r = self.do_request(url)
+                    stats_json = r.json()['result']
+                    for server,stats in stats_json.items():
+                        self.send_metrics(stats, server)
+            except requests.ConnectionError:
+                continue
+            time.sleep(15)
 
     def get_url(self, uri, server=None):
         if not server:
