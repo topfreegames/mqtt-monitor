@@ -5,7 +5,7 @@ import datadog.dogstatsd as dogstatsd
 import requests
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
 
@@ -92,6 +92,7 @@ class Monitor:
     def run(self):
         while True:
             try:
+                self.get_cluster_info()
                 for api in API:
                     url = self.get_url(api, server="http://{}:8080".format(self.args.kube_router))
                     r = self.do_request(url)
